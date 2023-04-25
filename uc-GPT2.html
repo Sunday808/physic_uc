@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <style>
+        /* 样式表 */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            text-align: right;
+            margin: 10px;
+        }
+        input {
+            width: 200px;
+            margin: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #67C23A;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #85CE61;
+        }
+        button:disabled{
+            background-color: #B3E19D;
+        }
+    </style>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物理不确定度计算器</title>
+    <style>
+        .input-container {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="input-container">
+            <label for="data-amount">数据数量:</label>
+            <input type="number" id="data-amount" min="1" step="1" oninput="createInputBoxes()">
+        </div>
+        <div class="input-container">
+            <label for="instrument-error">仪器误差:</label>
+            <input type="number" id="instrument-error" min="0" max="1" step="0.01">
+        </div>
+        <div class="input-container">
+            <label for="tp">tp:</label>
+            <input type="number" id="tp" min="0" step="0.01" value="2.57">
+        </div>
+        <div id="data-inputs"></div>
+        <button id="calculate-btn" onclick="calculate()">计算</button>
+        <div id="output"></div>
+    </div>
+    <script>
+        function createInputBoxes() {
+            const numberOfInputs = document.getElementById("data-amount").value;
+            const dataInputs = document.getElementById("data-inputs");
+            dataInputs.innerHTML = '';
+
+            for (let i = 0; i < numberOfInputs; i++) {
+                const container = document.createElement("div");
+                container.classList.add("input-container");
+                const label = document.createElement("label");
+                label.textContent = "数据 " + (i + 1) + ":";
+                const input = document.createElement("input");
+                input.type = "number";
+                input.id = "data-input-" + i;
+                container.appendChild(label);
+                container.appendChild(input);
+                dataInputs.appendChild(container);
+            }
+        }
+
+        function calculate() {
+            const numberOfInputs = document.getElementById("data-amount").value;
+            const instrumentError = document.getElementById("instrument-error").value;
+            const tp = document.getElementById("tp").value;
+            const outputDiv = document.getElementById("output");
+            
+            if (instrumentError < 0 || instrumentError > 1) {
+                outputDiv.innerHTML = "错误：仪器误差范围应在0-1之间。";
+                return;
+            }
+
+            let sum = 0;
+            let data = [];
+
+            for (let i = 0; i < numberOfInputs; i++) {
+                const value = parseFloat(document.getElementById("data-input-" + i).value);
+                data.push(value);
+                sum += value;
+            }
+
+            const average = sum / numberOfInputs;
+            let squaredDeviationsSum = 0;
+
+            for (let i = 0; i < numberOfInputs; i++) {
+                const deviation = data[i] - average;
+                const container = document.getElementById("data-input-" + i).parentNode;
+                const deviationLabel = document.createElement("span");
+                deviationLabel.textContent = " 偏差: " + deviation.toFixed(2);
+                container.appendChild(deviationLabel);
+                squaredDeviationsSum += deviation * deviation;
+            }
+
+            const standardDeviation = Math.sqrt(squaredDeviationsSum / (numberOfInputs - 1));
+            const pre_uncertainty = standardDeviation / Math.sqrt(numberOfInputs) ;
+            const uncertainty = Math.sqrt(Math.pow((pre_uncertainty*tp),2) + parseFloat(instrumentError*instrumentError));
+
+            outputDiv.innerHTML = "平均值: " + average.toFixed(2) + "<br>不确定度: " + uncertainty.toFixed(2);
+            
+            document.getElementById("calculate-btn").disabled = true;
+            document.getElementById("data-amount").disabled = true;
+            document.getElementById("instrument-error").disabled = true;
+            document.getElementById("tp").disabled = true;
+
+            
+            for (let i = 0; i < numberOfInputs; i++) {
+                document.getElementById("data-input-" + i).disabled = true;
+            }
+        }
+    </script>
+    
+    <script>
+//      Baidu 统计
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?0cf7b694452a208ebe157e89f86622d1";
+            var s = document.getElementsByTagName("script")[0]; 
+            s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+
+</body>
+</html>
